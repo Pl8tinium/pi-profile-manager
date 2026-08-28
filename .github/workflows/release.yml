@@ -54,7 +54,7 @@ jobs:
         run: npm pkg set version="${{ steps.version.outputs.version }}"
 
       - name: Publish to npm with trusted publishing
-        run: npm publish --access public
+        run: npm publish
 
       - name: Create GitHub release
         env:

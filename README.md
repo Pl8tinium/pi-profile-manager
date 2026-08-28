@@ -5,7 +5,7 @@ Isolated, shareable profiles for [Pi](https://pi.dev). Each profile is a normal 
 ## Install
 
 ```bash
-pi install git:github.com/pl8tinium/pi-config
+pi install git:github.com/pl8tinium/pi-profile-manager
 # or
 pi install npm:pi-profile-manager
 ```
