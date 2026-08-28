@@ -9,12 +9,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pl8tinium/pi-profile-manager.git"
+    "url": "https://github.com/Pl8tinium/pi-profile-manager"
   },
   "bugs": {
-    "url": "https://github.com/pl8tinium/pi-profile-manager/issues"
+    "url": "https://github.com/Pl8tinium/pi-profile-manager/issues"
   },
-  "homepage": "https://github.com/pl8tinium/pi-profile-manager#readme",
+  "homepage": "https://github.com/Pl8tinium/pi-profile-manager#readme",
   "engines": {
     "node": ">=22"
   },
