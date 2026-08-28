@@ -1,0 +1,34 @@
+{
+  "name": "pi-profile-manager",
+  "version": "0.1.0",
+  "description": "Isolated profiles for Pi configuration",
+  "keywords": ["pi-package"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pl8tinium/pi-config.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pl8tinium/pi-config/issues"
+  },
+  "homepage": "https://github.com/pl8tinium/pi-config#readme",
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "extensions/profile-manager",
+    "README.md",
+    "LICENSE"
+  ],
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "pi": {
+    "extensions": [
+      "./extensions/profile-manager"
+    ]
+  }
+}

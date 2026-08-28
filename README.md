@@ -1,101 +1,66 @@
-# pi-config
+# pi-profile-manager
 
-[![video](assets/thumbnail.png)](https://www.youtube.com/@EeroAlvar)
+Isolated profiles for [Pi](https://pi.dev). The base Pi configuration is left untouched; profiles get their own agent directory, extensions, skills, settings, and sessions.
 
-My personal [pi](https://github.com/earendil-works/pi) configuration.
+## Install
 
-The setup from [My Pi Setup After 6 Months](https://www.youtube.com/@EeroAlvar) (and its predecessor, [Pi Coding Agent Setup After 2 Months](https://www.youtube.com/watch?v=DWWrLlM3gwQ)).
-
-This is **not** meant to be installed as one big package. Browse the repo and copy the pieces you want into your own Pi config.
-
-Some extensions are big enough to live in their own repositories:
-
-- **[pi-interactive-subagents](https://github.com/amosblomqvist/pi-interactive-subagents)** — async, interactive subagents in multiplexer panes
-- **[pi-observational-memory](https://github.com/amosblomqvist/pi-observational-memory)** — tiered session memory with deterministic compaction
-- **[pi-dictate](https://github.com/amosblomqvist/pi-dictate)** — real-time voice dictation inside pi
-- **[learn](https://github.com/amosblomqvist/learn)** — my AI learning system, built on top of this config
-
-This repo contains everything else.
-
-## Copy an extension
-
-Single-file extension:
+Install this package from GitHub:
 
 ```bash
-cp extensions/ask-user-question.ts ~/.pi/agent/extensions/
+pi install git:github.com/pl8tinium/pi-config
 ```
 
-Directory extension:
+Or install it from npm:
 
 ```bash
-cp -r extensions/browser ~/.pi/agent/extensions/
+pi install npm:<package_name>
 ```
 
-If the copied extension has a `package.json`, install its deps:
+The package manager handles installation before extensions load. Once this package is installed, manage profiles from inside Pi:
 
-```bash
-cd ~/.pi/agent/extensions/browser
-npm install
+```text
+/profile create <profile_name>
+/profile use <profile_name>
+/profile install <package_source>
 ```
 
-Then restart pi or run `/reload`.
+Here, `<profile_name>` is the name of an isolated Pi environment, and `<package_source>` can be an npm, Git, or other package source supported by Pi.
 
-## Copy a skill
+Restart Pi after selecting a profile or installing a package. Return to the base environment with:
 
-```bash
-cp -r skills/pdf-reader ~/.pi/agent/skills/
+```text
+/profile off
 ```
 
-Then restart pi or run `/reload`.
+## Commands
 
-## Do not clone over your config
+| Command                             | Description                                                                                                                                               |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/profile list`                     | Lists all available profiles and marks the selected profile as active.                                                                                    |
+| `/profile create <profile_name>`    | Creates a profile by copying the current base environment. The profile gets its own agent directory, settings, extensions, skills, and sessions.          |
+| `/profile use <profile_name>`       | Selects a profile for future Pi launches. Restart Pi for the selection to take effect.                                                                    |
+| `/profile off`                      | Disables profile routing and returns future Pi launches to the base environment. Restart Pi for the change to take effect.                                |
+| `/profile sync [<profile_name>]`    | Synchronizes the selected profile, or the named profile, with the base environment and its `profile.json` resources. Restart Pi to load resource changes. |
+| `/profile show [<profile_name>]`    | Displays the profile's `profile.json` manifest. If no name is given, it displays the selected profile.                                                    |
+| `/profile install <package_source>` | Installs a Pi package into the selected profile.                                                                                                          |
+| `/profile remove <package_source>`  | Removes a Pi package from the selected profile.                                                                                                           |
+| `/profile update --extensions`      | Updates extensions installed in the selected profile.                                                                                                     |
+| `/profile update <package_source>`  | Updates the specified package in the selected profile.                                                                                                    |
+| `/profile delete <profile_name>`    | Permanently deletes the named profile and its files. The profile must not be active.                                                                      |
 
-Avoid cloning this repo directly into `~/.pi/agent` unless it is a fresh setup. If you already use pi, copy individual files/folders instead so you don't replace your own config.
+Profiles are stored in `~/.pi/profiles/`. A profile starts as a copy of the current global environment. Later global changes are inherited automatically unless the profile changed that file.
 
-## Contents
+## Profile resources
 
-### Extensions
+Edit `~/.pi/profiles/<profile_name>/profile.json`, then run `/profile sync <profile_name>` and restart Pi:
 
-- `ask-user-question.ts` — the agent asks you a question through a UI popup; popups from different extensions serialize via a shared UI lock
-- `bash-guard/` — hooks that catch dangerous bash commands before they run, with an on/off toggle
-- `browser/` — Playwright-driven headless Chromium the agent can drive (navigate, eval JS, inspect network/console, click, screenshot); off by default, enable with `/browser on`
-- `custom-header.ts` — the big capital Π header
-- `interactive-subagents/` — stub, see [pi-interactive-subagents](https://github.com/amosblomqvist/pi-interactive-subagents)
-- `observational-memory/` — stub, see [pi-observational-memory](https://github.com/amosblomqvist/pi-observational-memory)
-- `prompt-snippets/` — small, reusable behavior rules toggled onto a message before sending; reset after send
-- `web-fetch/` — fetch a URL and get clean markdown
-- `web-search/` — web search
-
-### Skills
-
-- `analyze-sessions/` — Python scripts to query past pi sessions: cost rollups, prompt-pattern mining, session rendering
-- `pdf-reader/` — read PDFs (lecture notes, papers) into the context
-- `web-debug/` — a playbook for debugging frontend issues with the browser extension's tools
-- `youtube-transcript/` — fetch a YouTube video's title and transcript as JSON
-
-### Deprecated
-
-`deprecated/` holds the extensions and skills from the two-month setup that are no longer in active use. They still work; they just didn't earn their place. Kept for reference.
-
-## Dependencies
-
-Extension-local npm deps are kept with the extension. Run `npm install` only in copied extensions that include a `package.json`:
-
-- `bash-guard/`
-- `browser/` (also run `npx playwright install chromium` once)
-- `web-fetch/`
-
-Optional system tools:
-
-```bash
-brew install yt-dlp ffmpeg
+```json
+{
+  "name": "<profile_name>",
+  "extensions": ["https://example.com/extension.ts"],
+  "skills": ["https://example.com/my-skill/SKILL.md"],
+  "agents": ["https://example.com/AGENTS.md"]
+}
 ```
 
-Used by `youtube-transcript/`. Python 3 is needed for `youtube-transcript/` and `analyze-sessions/` (stdlib only).
-
-PDF reader setup after copying `skills/pdf-reader/`:
-
-```bash
-python3 -m venv ~/.pi/agent/skills/pdf-reader/.venv
-~/.pi/agent/skills/pdf-reader/.venv/bin/pip install -r ~/.pi/agent/skills/pdf-reader/requirements.txt
-```
+Remote extensions execute with full user permissions. Only use sources you trust.
