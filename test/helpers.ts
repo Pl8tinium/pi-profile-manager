@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 
 export const testRoot = await mkdtemp(join(tmpdir(), "pi-profile-manager-"));
 process.env.PI_CODING_AGENT_DIR = join(testRoot, "base-agent");
@@ -31,10 +31,12 @@ export function createContext(
     confirmed?: boolean;
   } = {},
 ): {
-  context: ExtensionContext;
+  context: ExtensionCommandContext;
   messages: string[];
+  shutdowns: number;
 } {
   const messages: string[] = [];
+  let shutdowns = 0;
   const context = {
     hasUI: options.hasUI ?? true,
     ui: {
@@ -45,8 +47,17 @@ export function createContext(
         return options.confirmed ?? true;
       },
     },
-  } as unknown as ExtensionContext;
-  return { context, messages };
+    shutdown() {
+      shutdowns++;
+    },
+  } as unknown as ExtensionCommandContext;
+  return {
+    context,
+    messages,
+    get shutdowns() {
+      return shutdowns;
+    },
+  };
 }
 
 export async function writeJsonFile(

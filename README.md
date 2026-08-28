@@ -16,10 +16,10 @@ Restart Pi after installing the extension.
 
 ```text
 /profile create work     # create an empty profile
-/profile use work        # select it
+/profile use work        # select it and exit Pi
 ```
 
-Restart Pi. You are now running inside the `work` profile, and everything Pi reads or writes — settings, packages, sessions, credentials — lives in that profile's directory.
+Launch Pi again. You are now running inside the `work` profile, and everything Pi reads or writes — settings, packages, sessions, credentials — lives in that profile's directory.
 
 ## How it works
 
@@ -53,13 +53,13 @@ pi --no-profile               # launch the base environment, even with an active
 | `/profile create <profile_name>`                            | Creates an empty profile.                                                  |
 | `/profile install-profile <profile_name> <settings_source>` | Creates a profile from a local or HTTPS JSON settings file.                |
 | `/profile refresh <profile_name> <settings_source>`         | Replaces the profile's `settings.json` from a local or HTTPS source.       |
-| `/profile use <profile_name>`                               | Selects a profile for future launches. Restart Pi to use it.               |
-| `/profile off`                                              | Disables profile routing. Restart Pi to return to the base environment.    |
+| `/profile use <profile_name>`                               | Selects a profile and exits Pi so it can be used on the next launch.       |
+| `/profile off`                                              | Disables profile routing and exits Pi.                                     |
 | `/profile show [<profile_name>]`                            | Displays the `settings.json` of the named or active profile.               |
-| `/profile install <package_source>`                         | Installs a Pi package into the active profile.                             |
-| `/profile remove <package_source>`                          | Removes a Pi package from the active profile.                              |
-| `/profile update --extensions`                              | Updates all packages in the active profile.                                |
-| `/profile update <package_source>`                          | Updates the specified package in the active profile.                       |
+| `/profile install <package_source>`                         | Installs a Pi package. Restart Pi to load it.                              |
+| `/profile remove <package_source>`                          | Removes a Pi package. Restart Pi to apply it.                              |
+| `/profile update --extensions`                              | Updates all packages. Restart Pi to load the updates.                      |
+| `/profile update <package_source>`                          | Updates a package. Restart Pi to load the update.                          |
 | `/profile delete <profile_name>`                            | Deletes the profile, including sessions and credentials. Must be inactive. |
 
 ## Sharing a profile
@@ -85,6 +85,8 @@ Install it from a local file or an HTTPS URL:
 ```
 
 The file is validated and copied to `~/.pi/profiles/<profile_name>/settings.json`. `/profile show` reads that local file.
+
+Selecting or disabling profile routing exits Pi because the agent directory cannot be changed safely inside the current process. Package and settings changes also require launching Pi again to load them.
 
 ### Refreshing a profile
 

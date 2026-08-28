@@ -1,4 +1,4 @@
-import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { createProfileCommand } from "./create-profile.js";
 import { deleteProfileCommand } from "./delete-profile.js";
 import { disableProfileCommand } from "./disable-profile.js";
@@ -15,7 +15,7 @@ import { useProfileCommand } from "./use-profile.js";
 
 type ProfileCommandEntrypoint = (
   args: string[],
-  ctx: ExtensionContext,
+  ctx: ExtensionCommandContext,
 ) => Promise<void>;
 
 const profileCommandEntrypoints: Record<string, ProfileCommandEntrypoint> = {
@@ -34,7 +34,7 @@ const profileCommandEntrypoints: Record<string, ProfileCommandEntrypoint> = {
 
 export async function handleProfileCommand(
   args: string | undefined,
-  ctx: ExtensionContext,
+  ctx: ExtensionCommandContext,
 ): Promise<void> {
   const tokens = args?.trim().split(/\s+/).filter(Boolean) ?? [];
   const [command = "list", ...commandArgs] = tokens;

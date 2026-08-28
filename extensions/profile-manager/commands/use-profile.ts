@@ -1,11 +1,11 @@
-import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { requireProfile, writeState } from "../profile-store.js";
 import { notify } from "../profile-ui.js";
 import { requireArgument } from "./command-helpers.js";
 
 export async function useProfileCommand(
   args: string[],
-  ctx: ExtensionContext,
+  ctx: ExtensionCommandContext,
 ): Promise<void> {
   const profileName = requireArgument(
     args,
@@ -14,5 +14,9 @@ export async function useProfileCommand(
   );
   await requireProfile(profileName);
   await writeState({ activeProfile: profileName });
-  notify(ctx, `Profile "${profileName}" selected. Restart Pi to use it.`);
+  notify(
+    ctx,
+    `Profile "${profileName}" selected. Pi will now exit; start Pi again to use it.`,
+  );
+  ctx.shutdown();
 }

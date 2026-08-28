@@ -31,10 +31,13 @@ test("selects and clears a profile", async () => {
   const selected = createContext();
   await commands.handleProfileCommand("use work", selected.context);
   assert.equal(await store.getActiveProfile(), "work");
-  assert.match(selected.messages[0]!, /selected/);
+  assert.match(selected.messages[0]!, /start Pi again/);
+  assert.equal(selected.shutdowns, 1);
 
-  await commands.handleProfileCommand("off", createContext().context);
+  const disabled = createContext();
+  await commands.handleProfileCommand("off", disabled.context);
   assert.equal(await store.getActiveProfile(), undefined);
+  assert.equal(disabled.shutdowns, 1);
 });
 
 test("shows the selected profile settings", async () => {

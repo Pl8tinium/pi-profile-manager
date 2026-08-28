@@ -11,16 +11,28 @@ import {
 } from "./profile-config.js";
 import { getActiveProfile } from "./profile-store.js";
 
+export type PiOutputStream = "stdout" | "stderr";
+
+export interface PiRunOptions {
+  inheritStdin?: boolean;
+  onOutput?: (chunk: string, stream: PiOutputStream) => void;
+}
+
 export async function runPiInProfile(
   name: string,
   args: string[],
-  inheritStdin = true,
+  options: PiRunOptions = {},
 ): Promise<number> {
   const invocation = getPiInvocation(
     isPackageCommand(args) ? args : getProfileLaunchArguments(args),
   );
+  const shouldCaptureOutput = options.onOutput !== undefined;
   const child = spawn(invocation.command, invocation.args, {
-    stdio: inheritStdin ? "inherit" : ["ignore", "inherit", "inherit"],
+    stdio: shouldCaptureOutput
+      ? ["ignore", "pipe", "pipe"]
+      : options.inheritStdin === false
+        ? ["ignore", "inherit", "inherit"]
+        : "inherit",
     env: {
       ...process.env,
       [ROUTED_ENV]: "1",
@@ -29,6 +41,14 @@ export async function runPiInProfile(
       PI_CODING_AGENT_DIR: getProfileDir(name),
     },
   });
+  if (options.onOutput) {
+    child.stdout?.on("data", (chunk: Buffer) =>
+      options.onOutput!(chunk.toString(), "stdout"),
+    );
+    child.stderr?.on("data", (chunk: Buffer) =>
+      options.onOutput!(chunk.toString(), "stderr"),
+    );
+  }
   return new Promise<number>((resolveExit, reject) => {
     child.once("error", reject);
     child.once("close", (code: number | null, signal: NodeJS.Signals | null) =>

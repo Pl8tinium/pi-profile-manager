@@ -51,6 +51,38 @@ test("does not prepend the extension when running Pi package commands", async ()
   assert.deepEqual(childDetails.args, ["install", "npm:example-package"]);
 });
 
+test("captures package output without writing it to the terminal", async () => {
+  await store.createProfile("work");
+  const fixturePath = join(testRoot, "package-output-child.mjs");
+  await writeFile(
+    fixturePath,
+    `process.stdout.write("stdout\\n");
+process.stderr.write("stderr\\n");
+`,
+    "utf8",
+  );
+  const output: Array<{ chunk: string; stream: string }> = [];
+
+  const originalEntrypoint = process.argv[1];
+  process.argv[1] = fixturePath;
+  const exitPromise = runtime.runPiInProfile(
+    "work",
+    ["install", "npm:example-package"],
+    {
+      inheritStdin: false,
+      onOutput: (chunk, stream) => output.push({ chunk, stream }),
+    },
+  );
+  process.argv[1] = originalEntrypoint;
+  const exitCode = await exitPromise;
+
+  assert.equal(exitCode, 0);
+  assert.deepEqual(output, [
+    { chunk: "stdout\n", stream: "stdout" },
+    { chunk: "stderr\n", stream: "stderr" },
+  ]);
+});
+
 async function writeRuntimeFixture(
   fixturePath: string,
   outputPath: string,
@@ -75,7 +107,9 @@ async function runChildProcess(
 ): Promise<number> {
   const originalEntrypoint = process.argv[1];
   process.argv[1] = fixturePath;
-  const exitPromise = runtime.runPiInProfile("work", args, false);
+  const exitPromise = runtime.runPiInProfile("work", args, {
+    inheritStdin: false,
+  });
   process.argv[1] = originalEntrypoint;
   const exitCode = await exitPromise;
   delete process.env.PI_PROFILE_RUNTIME_OUTPUT;
