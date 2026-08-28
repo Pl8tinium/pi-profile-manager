@@ -1,9 +1,5 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
-import {
-  readManifest,
-  requireActiveProfile,
-  requireProfile,
-} from "../profile-store.js";
+import { readProfileSettings, requireActiveProfile } from "../profile-store.js";
 import { notify } from "../profile-ui.js";
 
 export async function showProfileCommand(
@@ -11,7 +7,6 @@ export async function showProfileCommand(
   ctx: ExtensionContext,
 ): Promise<void> {
   const profileName = args[0] ?? (await requireActiveProfile());
-  await requireProfile(profileName);
-  const manifest = await readManifest(profileName);
-  notify(ctx, JSON.stringify(manifest, null, 2));
+  const settings = await readProfileSettings(profileName);
+  notify(ctx, JSON.stringify(settings, null, 2));
 }

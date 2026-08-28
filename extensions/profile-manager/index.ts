@@ -2,7 +2,7 @@ import type {
   ExtensionAPI,
   ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
-import { handleProfileCommand } from "./commands.js";
+import { handleProfileCommand } from "./commands/index.js";
 import { isRoutedProcess } from "./profile-config.js";
 import { routeActiveProfile } from "./profile-runtime.js";
 
@@ -26,7 +26,7 @@ function registerProfileFlags(pi: ExtensionAPI): void {
 
 async function routeProfileProcess(pi: ExtensionAPI): Promise<void> {
   try {
-    await routeActiveProfile(pi);
+    await routeActiveProfile();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     process.stderr.write(`Profile routing skipped: ${message}\n`);

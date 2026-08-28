@@ -1,8 +1,11 @@
 {
   "name": "pi-profile-manager",
   "version": "0.1.0",
+  "type": "module",
   "description": "Isolated profiles for Pi configuration",
-  "keywords": ["pi-package"],
+  "keywords": [
+    "pi-package"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -20,6 +23,22 @@
     "README.md",
     "LICENSE"
   ],
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "format:check": "prettier --check README.md package.json tsconfig.json .github/workflows/release.yml extensions/profile-manager test",
+    "verify": "npm run check && npm test && npm run format:check && npm pack --dry-run"
+  },
+  "dependencies": {
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.84.3",
+    "@types/node": "^22.0.0",
+    "prettier": "^3.9.6",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2"
+  },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*"
   },

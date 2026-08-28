@@ -1,34 +1,32 @@
 import { spawn } from "node:child_process";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { fileURLToPath } from "node:url";
+import { pathExists } from "./files.js";
 import {
-  BASE_DIR_ENV,
-  MANAGER_DIR_ENV,
-  ROUTED_ENV,
-  baseAgentDir,
-  getProfileAgentDir,
   getProfileDir,
   isRoutedProcess,
   managerDir,
+  MANAGER_DIR_ENV,
+  ROUTED_ENV,
   validateProfileName,
 } from "./profile-config.js";
-import { getActiveProfile, pathExists } from "./profile-store.js";
-import { syncProfile } from "./profile-sync.js";
+import { getActiveProfile } from "./profile-store.js";
 
 export async function runPiInProfile(
   name: string,
   args: string[],
   inheritStdin = true,
 ): Promise<number> {
-  const invocation = getPiInvocation(args);
+  const invocation = getPiInvocation(
+    isPackageCommand(args) ? args : getProfileLaunchArguments(args),
+  );
   const child = spawn(invocation.command, invocation.args, {
     stdio: inheritStdin ? "inherit" : ["ignore", "inherit", "inherit"],
     env: {
       ...process.env,
       [ROUTED_ENV]: "1",
       [MANAGER_DIR_ENV]: managerDir,
-      [BASE_DIR_ENV]: baseAgentDir,
       PI_PROFILE_NAME: name,
-      PI_CODING_AGENT_DIR: getProfileAgentDir(name),
+      PI_CODING_AGENT_DIR: getProfileDir(name),
     },
   });
   return new Promise<number>((resolveExit, reject) => {
@@ -39,7 +37,15 @@ export async function runPiInProfile(
   });
 }
 
-export async function routeActiveProfile(_pi: ExtensionAPI): Promise<void> {
+export function getProfileLaunchArguments(args: string[]): string[] {
+  return [
+    "--extension",
+    fileURLToPath(new URL("./index.ts", import.meta.url)),
+    ...args,
+  ];
+}
+
+export async function routeActiveProfile(): Promise<void> {
   if (isRoutedProcess || hasCliFlag("no-profile")) return;
   const requested = getCliStringFlag("profile");
   const activeProfile = requested || (await getActiveProfile());
@@ -50,12 +56,11 @@ export async function routeActiveProfile(_pi: ExtensionAPI): Promise<void> {
       `Pi profile "${activeProfile}" does not exist; continuing with the base environment.`,
     );
   }
-  await launchProfile(activeProfile);
+  process.exit(await runPiInProfile(activeProfile, getCliArgs()));
 }
 
-async function launchProfile(name: string): Promise<void> {
-  await syncProfile(name);
-  process.exit(await runPiInProfile(name, getCliArgs()));
+function isPackageCommand(args: string[]): boolean {
+  return ["install", "remove", "update"].includes(args[0] ?? "");
 }
 
 function getPiInvocation(args: string[]): { command: string; args: string[] } {

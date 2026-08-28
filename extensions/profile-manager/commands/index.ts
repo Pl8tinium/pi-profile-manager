@@ -1,0 +1,47 @@
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { createProfileCommand } from "./create-profile.js";
+import { deleteProfileCommand } from "./delete-profile.js";
+import { disableProfileCommand } from "./disable-profile.js";
+import { installProfileCommand } from "./install-profile.js";
+import { listProfilesCommand } from "./list-profiles.js";
+import {
+  installPackageCommand,
+  removePackageCommand,
+  updatePackageCommand,
+} from "./package-commands.js";
+import { refreshProfileCommand } from "./refresh-profile.js";
+import { showProfileCommand } from "./show-profile.js";
+import { useProfileCommand } from "./use-profile.js";
+
+type ProfileCommandEntrypoint = (
+  args: string[],
+  ctx: ExtensionContext,
+) => Promise<void>;
+
+const profileCommandEntrypoints: Record<string, ProfileCommandEntrypoint> = {
+  list: listProfilesCommand,
+  create: createProfileCommand,
+  "install-profile": installProfileCommand,
+  refresh: refreshProfileCommand,
+  use: useProfileCommand,
+  off: disableProfileCommand,
+  show: showProfileCommand,
+  install: installPackageCommand,
+  remove: removePackageCommand,
+  update: updatePackageCommand,
+  delete: deleteProfileCommand,
+};
+
+export async function handleProfileCommand(
+  args: string | undefined,
+  ctx: ExtensionContext,
+): Promise<void> {
+  const tokens = args?.trim().split(/\s+/).filter(Boolean) ?? [];
+  const [command = "list", ...commandArgs] = tokens;
+  const entrypoint = profileCommandEntrypoints[command];
+  if (!entrypoint)
+    throw new Error(
+      `Usage: /profile [${Object.keys(profileCommandEntrypoints).join("|")}]`,
+    );
+  await entrypoint(commandArgs, ctx);
+}

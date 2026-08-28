@@ -1,5 +1,9 @@
-export function requireProfileName(args: string[], usage: string): string {
-  const profileName = args[0];
-  if (!profileName) throw new Error(usage);
-  return profileName;
+export function requireArgument(
+  args: string[],
+  index: number,
+  usage: string,
+): string {
+  const value = args[index];
+  if (!value) throw new Error(usage);
+  return value;
 }

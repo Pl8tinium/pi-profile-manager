@@ -1,14 +1,15 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { createProfile } from "../profile-store.js";
 import { notify } from "../profile-ui.js";
-import { requireProfileName } from "./command-helpers.js";
+import { requireArgument } from "./command-helpers.js";
 
 export async function createProfileCommand(
   args: string[],
   ctx: ExtensionContext,
 ): Promise<void> {
-  const profileName = requireProfileName(
+  const profileName = requireArgument(
     args,
+    0,
     "Usage: /profile create <profile_name>",
   );
   await createProfile(profileName);

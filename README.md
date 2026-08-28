@@ -1,66 +1,108 @@
 # pi-profile-manager
 
-Isolated profiles for [Pi](https://pi.dev). The base Pi configuration is left untouched; profiles get their own agent directory, extensions, skills, settings, and sessions.
+Isolated, shareable profiles for [Pi](https://pi.dev). Each profile is a normal Pi agent directory with its own settings, packages, resources, sessions, and credentials.
 
 ## Install
 
-Install this package from GitHub:
-
 ```bash
 pi install git:github.com/pl8tinium/pi-config
+# or
+pi install npm:pi-profile-manager
 ```
 
-Or install it from npm:
+Restart Pi after installing the extension.
+
+## Quick start
+
+```text
+/profile create work     # create an empty profile
+/profile use work        # select it
+```
+
+Restart Pi. You are now running inside the `work` profile, and everything Pi reads or writes — settings, packages, sessions, credentials — lives in that profile's directory.
+
+## How it works
+
+Profiles live in `~/.pi/profiles/<profile_name>/`. Each profile is a standalone Pi agent directory:
+
+```text
+~/.pi/profiles/<profile_name>/
+├── settings.json
+├── extensions/
+├── skills/
+├── prompts/
+├── themes/
+├── sessions/
+└── auth.json
+```
+
+When a profile is active, the extension starts Pi with the profile directory as `PI_CODING_AGENT_DIR`. The profile's `settings.json` is the only configuration Pi reads — there is no manifest, inheritance, or synchronization with the base environment. Launching a profile never fetches anything.
+
+Two CLI flags control routing for a single launch:
 
 ```bash
-pi install npm:<package_name>
-```
-
-The package manager handles installation before extensions load. Once this package is installed, manage profiles from inside Pi:
-
-```text
-/profile create <profile_name>
-/profile use <profile_name>
-/profile install <package_source>
-```
-
-Here, `<profile_name>` is the name of an isolated Pi environment, and `<package_source>` can be an npm, Git, or other package source supported by Pi.
-
-Restart Pi after selecting a profile or installing a package. Return to the base environment with:
-
-```text
-/profile off
+pi --profile <profile_name>   # launch this profile, without changing the active selection
+pi --no-profile               # launch the base environment, even with an active profile
 ```
 
 ## Commands
 
-| Command                             | Description                                                                                                                                               |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/profile list`                     | Lists all available profiles and marks the selected profile as active.                                                                                    |
-| `/profile create <profile_name>`    | Creates a profile by copying the current base environment. The profile gets its own agent directory, settings, extensions, skills, and sessions.          |
-| `/profile use <profile_name>`       | Selects a profile for future Pi launches. Restart Pi for the selection to take effect.                                                                    |
-| `/profile off`                      | Disables profile routing and returns future Pi launches to the base environment. Restart Pi for the change to take effect.                                |
-| `/profile sync [<profile_name>]`    | Synchronizes the selected profile, or the named profile, with the base environment and its `profile.json` resources. Restart Pi to load resource changes. |
-| `/profile show [<profile_name>]`    | Displays the profile's `profile.json` manifest. If no name is given, it displays the selected profile.                                                    |
-| `/profile install <package_source>` | Installs a Pi package into the selected profile.                                                                                                          |
-| `/profile remove <package_source>`  | Removes a Pi package from the selected profile.                                                                                                           |
-| `/profile update --extensions`      | Updates extensions installed in the selected profile.                                                                                                     |
-| `/profile update <package_source>`  | Updates the specified package in the selected profile.                                                                                                    |
-| `/profile delete <profile_name>`    | Permanently deletes the named profile and its files. The profile must not be active.                                                                      |
+| Command                                                     | Description                                                                |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `/profile list`                                             | Lists all profiles and marks the active one.                               |
+| `/profile create <profile_name>`                            | Creates an empty profile.                                                  |
+| `/profile install-profile <profile_name> <settings_source>` | Creates a profile from a local or HTTPS JSON settings file.                |
+| `/profile refresh <profile_name> <settings_source>`         | Replaces the profile's `settings.json` from a local or HTTPS source.       |
+| `/profile use <profile_name>`                               | Selects a profile for future launches. Restart Pi to use it.               |
+| `/profile off`                                              | Disables profile routing. Restart Pi to return to the base environment.    |
+| `/profile show [<profile_name>]`                            | Displays the `settings.json` of the named or active profile.               |
+| `/profile install <package_source>`                         | Installs a Pi package into the active profile.                             |
+| `/profile remove <package_source>`                          | Removes a Pi package from the active profile.                              |
+| `/profile update --extensions`                              | Updates all packages in the active profile.                                |
+| `/profile update <package_source>`                          | Updates the specified package in the active profile.                       |
+| `/profile delete <profile_name>`                            | Deletes the profile, including sessions and credentials. Must be inactive. |
 
-Profiles are stored in `~/.pi/profiles/`. A profile starts as a copy of the current global environment. Later global changes are inherited automatically unless the profile changed that file.
+## Sharing a profile
 
-## Profile resources
-
-Edit `~/.pi/profiles/<profile_name>/profile.json`, then run `/profile sync <profile_name>` and restart Pi:
+A shareable profile is a plain Pi `settings.json`. It has no profile name embedded — the installer picks the local name.
 
 ```json
 {
-  "name": "<profile_name>",
-  "extensions": ["https://example.com/extension.ts"],
-  "skills": ["https://example.com/my-skill/SKILL.md"],
-  "agents": ["https://example.com/AGENTS.md"]
+  "packages": [
+    "npm:<package_name>",
+    "git:github.com/<owner>/<repository>@<ref>"
+  ],
+  "defaultProvider": "<provider>",
+  "defaultModel": "<model>"
 }
 ```
 
-Remote extensions execute with full user permissions. Only use sources you trust.
+Install it from a local file or an HTTPS URL:
+
+```text
+/profile install-profile <profile_name> ~/shared-profiles/settings.json
+/profile install-profile <profile_name> https://raw.githubusercontent.com/<owner>/<repository>/<ref>/settings.json
+```
+
+The file is validated and copied to `~/.pi/profiles/<profile_name>/settings.json`. `/profile show` reads that local file.
+
+### Refreshing a profile
+
+```text
+/profile refresh <profile_name> <settings_source>
+```
+
+Refresh fetches the source and replaces the profile's `settings.json` — it never merges, so local edits to that file are overwritten. Extensions, sessions, credentials, and all other files are left untouched. The source is not remembered; pass it again each time you refresh.
+
+### Packages and loose resources
+
+Use Pi's package manager for shareable extensions, skills, prompts, and themes:
+
+```text
+/profile install npm:<package_name>
+/profile install git:github.com/<owner>/<repository>@<ref>
+```
+
+Packages are recorded in the profile's own `settings.json` and installed under the profile directory.
+
+For local-only resources, drop files directly into the profile's `extensions/`, `skills/`, `prompts/`, or `themes/` directories. Those files are user-owned and never reconciled. Remote profile files should reference npm/Git packages rather than loose remote files.
